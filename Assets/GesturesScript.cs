@@ -20,45 +20,44 @@ public class GesturesScript : MonoBehaviour
     public Text patientText;
     public Text pathologyText;
     public Text dateText;
-
+    public Text detailText;
     public Text label;
 
     Controller controller;
     Vector VectorHandPosRight;
     Vector VectorHandPosLeft;
     GameObject selectedModel;
+    GameObject selectedChild;
     GameObject highlightedModel;
 
     bool isOpaque = true;
 
     List<Material> materials;
 
-    Vector3 centerInParent = new Vector3(0f, -0.05f, 0.6f);
     Vector3 defaultPosition;
-    Quaternion defaultRotation = new Quaternion(0f, 0f, 0f, 0f);
-    Quaternion defaultChildRotation = new Quaternion(-90f, 0f, 0f, 0f);
+    Quaternion defaultRotation;
 
     float lastDistanceBetweenHands = -1;
     //float lastZDirectionLeftHand = -1;
     float lastYDirectionLeftHand = -1;
     float lastXDirectionLeftHand = -1;
 
-    Vector3 lastPalmVelocity = new Vector3(-1, -1, -1);
+    Vector3 lastPalmPosition = new Vector3(-1, -1, -1);
     float time = 0f;
 
     public HandModelBase HandModel = null;
-    Vector3 center;
-
 
     void Start()
     {
         //Read data through a local variable
-        /*String patientName = GameControl.control.patientName;
+        String patientName = GameControl.control.patientName;
         String pathologyName = GameControl.control.pathologyName;
         String modelName = GameControl.control.modelName;
+        String details = GameControl.control.details;
 
         patientText.text = patientName;
         pathologyText.text = pathologyName;
+        detailText.text = details;
 
         polmoniObject.SetActive(false);
         cervelloObject.SetActive(false);
@@ -80,13 +79,15 @@ public class GesturesScript : MonoBehaviour
             gastroObject.SetActive(true);
             mainModel = gastroObject;
             materials = gastroMaterials;
-        }*/
-
-        mainModel = polmoniObject;
-        materials = polmoniMaterials;
+        }
 
         selectedModel = mainModel;
         defaultPosition = selectedModel.transform.position;
+        defaultRotation = selectedModel.transform.rotation;
+
+        selectedChild = selectedModel;
+
+        label.text = selectedModel.transform.name;
     }
 
     void Update()
@@ -224,9 +225,7 @@ public class GesturesScript : MonoBehaviour
                     center = selectedModel.GetComponent<Renderer>().bounds.center;
                 }*/
 
-                //myModel.transform.Rotate(differenceY / 2, differenceX / 2, 0);
-                selectedModel.transform.RotateAround(center, Vector3.up, differenceX / 2);
-                selectedModel.transform.RotateAround(center, Vector3.right, differenceY / 2);
+                selectedModel.transform.Rotate(differenceY / 2, differenceX / 2, 0);
 
             }
             else
@@ -252,57 +251,82 @@ public class GesturesScript : MonoBehaviour
 
             if (finger.IsExtended)
             {
-
-                if (lastPalmVelocity.Equals(new Vector3(-1, -1, -1)))
+                bool cont = true;
+                foreach (Finger f in HandModel.GetLeapHand().Fingers)
                 {
-                    lastPalmVelocity = hand.PalmPosition.ToVector3();
-                }
-
-                //check if palm position variation
-                Vector3 difference = hand.PalmPosition.ToVector3() - lastPalmVelocity;
-                if (difference.x.Abs() < 1 && difference.y.Abs() < 1 && difference.z.Abs() < 1)
-                {
-                    RaycastHit hit;
-
-                    if (Physics.Raycast(finger.TipPosition.ToVector3(), targetDirection, out hit))
+                    if (f != finger && f.IsExtended)
                     {
-                        Debug.Log("hit");
-                        if (hit.collider.gameObject.transform.parent.gameObject == mainModel && selectedModel == mainModel)
+                        cont = false;
+                    }
+                }
+                if (cont)
+                {
+                    if (lastPalmPosition.Equals(new Vector3(-1, -1, -1)))
+                    {
+                        lastPalmPosition = hand.PalmPosition.ToVector3();
+                    }
+
+                    //check if palm position variation
+                    Vector3 difference = hand.PalmPosition.ToVector3() - lastPalmPosition;
+                    if (difference.x.Abs() < 1 && difference.y.Abs() < 1 && difference.z.Abs() < 1)
+                    {
+                        RaycastHit hit;
+
+
+                        if (Physics.Raycast(finger.TipPosition.ToVector3(), targetDirection, out hit))
                         {
-                            highlightedModel = hit.collider.gameObject;
-                            highlightObject();
-
-                            time += Time.deltaTime;
-
-                            if (time >= 2f)
+                            if (hit.collider.gameObject == selectedModel || hit.collider.gameObject.transform.parent.gameObject == selectedModel)
                             {
-                                selectObject(hit.collider.gameObject);
-                                time = 0f;
+                                highlightedModel = hit.collider.gameObject;
+                                label.text = hit.collider.gameObject.name;
+                                highlightObject();
+
+                                time += Time.deltaTime;
+
+                                if (time >= 2f)
+                                {
+                                    selectObject(hit.collider.gameObject, 0.57f);
+                                    time = 0f;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (highlightedModel != null)
+                            {
+                                highlightedModel.GetComponent<Outline>().OutlineMode = Outline.Mode.OutlineHidden;
+                            }
+                            if (selectedChild != null)
+                            {
+                                label.text = selectedChild.transform.name;
                             }
                         }
                     }
                     else
                     {
-                        if (highlightedModel != null)
-                        {
-                            highlightedModel.GetComponent<Outline>().OutlineMode = Outline.Mode.OutlineHidden;
-                        }
+                        time = 0f;
+                        lastPalmPosition = new Vector3(-1, -1, -1);
                     }
+
+                    lastPalmPosition = hand.PalmPosition.ToVector3();
                 }
                 else
                 {
-                    time = 0f;
-                    lastPalmVelocity = new Vector3(-1, -1, -1);
+                    if (selectedChild != null)
+                    {
+                        label.text = selectedChild.transform.name;
+                    }
                 }
-
-                lastPalmVelocity = hand.PalmPosition.ToVector3();
             }
         }
     }
 
     private void highlightObject()
     {
-        highlightedModel.GetComponent<Outline>().OutlineMode = Outline.Mode.OutlineAll;
+        if (highlightedModel != null)
+        {
+            highlightedModel.GetComponent<Outline>().OutlineMode = Outline.Mode.OutlineAll;
+        }
 
         Component[] objectsOutline = selectedModel.GetComponentsInChildren<Outline>();
         foreach (Outline item in objectsOutline)
@@ -314,114 +338,83 @@ public class GesturesScript : MonoBehaviour
         }
     }
 
-
-    private void selectObject(GameObject selected)
-    {
-        Component[] objectsRenderer = selectedModel.GetComponentsInChildren<Renderer>();
-        foreach (Renderer item in objectsRenderer)
-        {
-            if (item.gameObject != selected)
-            {
-
-                if (item.gameObject.name.Equals("lungs_4_SN"))
-                {
-                    item.gameObject.GetComponent<Renderer>().material = materials[1];
-                }
-                else if (item.gameObject.name.Equals("lungs_4_DX"))
-                {
-                    item.gameObject.GetComponent<Renderer>().material = materials[1];
-
-                }
-                else if (item.gameObject.name.Equals("lungs_4_trachea"))
-                {
-                    item.gameObject.GetComponent<Renderer>().material = materials[3];
-                }
-                else
-                {
-                    item.gameObject.GetComponent<Renderer>().material = materials[5];
-                }
-            }
-        }
-
-        selectedModel.GetComponent<GlideController>().SetDestination(centerInParent);
-
-        selectedModel = selected;
-
-    }
-
     public void onOpaquePressed()
     {
         isOpaque = !isOpaque;
-        setOpaque(isOpaque);
-        
+        setOpaque(isOpaque, null);
+
+    }
+
+    public static Vector3 getRelativePosition(Transform origin, Vector3 position)
+    {
+        Vector3 distance = position - origin.position;
+        Vector3 relativePosition = Vector3.zero;
+        relativePosition.x = Vector3.Dot(distance, origin.right.normalized);
+        relativePosition.y = Vector3.Dot(distance, origin.up.normalized);
+        relativePosition.z = Vector3.Dot(distance, origin.forward.normalized);
+
+        return relativePosition;
+    }
+
+    public void selectObject(GameObject child, float zoom)
+    {
+        selectedModel.GetComponent<AnimationController>().SetDestination(defaultPosition);
+
+        label.text = child.gameObject.name;
+        Vector3 center = child.GetComponent<Renderer>().bounds.center;
+
+        Vector3 offset = getRelativePosition(selectedModel.transform, center);
+        Vector3 newPos = new Vector3(defaultPosition.x + offset.x, defaultPosition.y + offset.y, zoom);
+
+        selectedModel.GetComponent<AnimationController>().SetDestination(newPos);
+
+        isOpaque = false;
+        setOpaque(isOpaque, child);
+
+        selectedChild = child;
     }
 
     public void resetMainObject()
     {
-        Debug.Log("click");
+        selectedModel.transform.rotation = defaultRotation;
+        selectedModel.GetComponent<AnimationController>().SetDestination(defaultPosition);
 
-        GameObject child = selectedModel.transform.GetChild(2).gameObject;
-        center = child.GetComponent<Renderer>().bounds.center;
+        label.text = selectedModel.transform.name;
 
-        Debug.Log(child.transform.localPosition + " - " + selectedModel.transform.position);
+        isOpaque = true;
+        setOpaque(isOpaque, null);
 
-        //selectedModel.transform.position = child.transform.localPosition + defaultPosition;
-
-       /* Debug.Log("click");
-        if (selectedModel != mainModel)
-        {
-            selectedModel.transform.localPosition = new Vector3(0f, 0f, 0f);
-            //selectedModel.transform.localRotation = defaultChildRotation;
-            selectedModel.transform.localEulerAngles = new Vector3(-90f, 0f, 0f);
-
-            selectedModel = mainModel;
-            setOpaque(true);
-            selectedModel.GetComponent<GlideController>().SetDestination(defaultPosition);
-            //selectedModel.GetComponent<GlideController>().SetRotation(defaultRotation);
-            selectedModel.transform.rotation = defaultRotation;
-        }*/
+        selectedChild = selectedModel;
     }
 
-    private void setOpaque(bool opaque)
+    private void setOpaque(bool opaque, GameObject exclude)
     {
-
         for (int i = 0; i < selectedModel.transform.childCount - 1; i++)
         {
             GameObject child = selectedModel.transform.GetChild(i).gameObject;
 
-            Debug.Log(child.transform.name);
-
             if (!opaque)
             {
-                if (child.transform.childCount > 0)
-                {
-                    for (int j = 0; j < child.transform.childCount; j++)
-                    {
-                        child.transform.GetChild(j).gameObject.GetComponent<Renderer>().material = materials[i + selectedModel.transform.childCount - 1];
-                    }
-                }
-                else
+                if (child != exclude)
                 {
                     child.GetComponent<Renderer>().material = materials[i + selectedModel.transform.childCount - 1];
-
-                }
-            }
-            else
-            {
-                if (child.transform.childCount > 0)
-                {
-                    for (int j = 0; j < child.transform.childCount; j++)
-                    {
-                        child.transform.GetChild(j).gameObject.GetComponent<Renderer>().material = materials[i];
-                    }
                 }
                 else
                 {
                     child.GetComponent<Renderer>().material = materials[i];
-
                 }
             }
+            else
+            {
+                child.GetComponent<Renderer>().material = materials[i];
+            }
         }
+    }
+
+    public void GoToDesease()
+    {
+        GameObject child = selectedModel.transform.GetChild(selectedModel.transform.childCount - 1).gameObject;
+        selectObject(child, 0.19f);
     }
 
     private void OnDrawGizmos()
@@ -434,6 +427,7 @@ public class GesturesScript : MonoBehaviour
         }
     }
 
+
     /*void OnGUI()
     {
         GameObject troncoEncefalico = mainModel.transform.GetChild(2).gameObject;
@@ -443,4 +437,5 @@ public class GesturesScript : MonoBehaviour
         rect.y = Screen.height - point.y - rect.height; // bottom left corner set to the 3D point
         GUI.Label(rect, troncoEncefalico.transform.name); // display its name, or other string
     }*/
+ 
 }

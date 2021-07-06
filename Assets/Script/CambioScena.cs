@@ -1,53 +1,48 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class CambioScena : MonoBehaviour
 {
-    // Start is called before the first frame update
-
-    public void Modello_Polmone_Pressed()   //per assegnare al pulsante "button" una funzione
+    public void Modello_Polmone_Pressed()
     {
         GameControl.control.patientName = "Paziente 1";
         GameControl.control.pathologyName = "Tumore Polmonare";
         GameControl.control.modelName = "Polmoni";
+        GameControl.control.details = "Età: 70 - Sesso: M";
         SceneManager.LoadScene("3dModel");
     }
 
-    public void Modello_Cervello_Pressed()   //per assegnare al pulsante "button" una funzione
+    public void Modello_Cervello_Pressed()
     {
         GameControl.control.patientName = "Paziente 2";
         GameControl.control.pathologyName = "Ascesso Cerebrale";
         GameControl.control.modelName = "Cervello";
+        GameControl.control.details = "Età: 55 - Sesso: F";
         SceneManager.LoadScene("3dModel");
     }
 
-    public void Modello_Gastro_Pressed()   //per assegnare al pulsante "button" una funzione
+    public void Modello_Gastro_Pressed() 
     {
         GameControl.control.patientName = "Paziente 3";
-        GameControl.control.pathologyName = "...";
-        GameControl.control.modelName = "Gastro";
+        GameControl.control.pathologyName = "Ascesso Epatico";
+        GameControl.control.modelName = "Sistema Gastrointestinale";
+        GameControl.control.details = "Età: 35 - Sesso: M";
         SceneManager.LoadScene("3dModel");
     }
 
-    public void Tc_Cervello_Pressed()   //per assegnare al pulsante "button" una funzione
-    {
-        SceneManager.LoadScene("TC_Cervello");
-    }
-    public void Tc_Gastro_Pressed()   //per assegnare al pulsante "button" una funzione
-    {
-        SceneManager.LoadScene("TC_Gastro");
-    }
-    public void Tc_Polmone_Pressed()   //per assegnare al pulsante "button" una funzione
-    {
-        SceneManager.LoadScene("TC_Polmone");
-    }
-
-    public void HomePressed()   //per assegnare al pulsante "button" una funzione
+    public void HomePressed()
     {
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void MRIPressed()
+    {
+        SceneManager.LoadScene("mriModel");
+    }
+
+    public void Model3DPressed()
+    {
+        SceneManager.LoadScene("3dModel");
     }
 
     public void ExitPressed()

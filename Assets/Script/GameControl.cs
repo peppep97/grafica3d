@@ -12,6 +12,7 @@ public class GameControl : MonoBehaviour
     public String patientName;
     public String pathologyName;
     public String modelName;
+    public String details;
 
     void Awake()
     {

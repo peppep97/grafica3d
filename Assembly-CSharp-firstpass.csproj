@@ -26,7 +26,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0169</NoWarn>
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -35,7 +35,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0169</NoWarn>
-    <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <NoConfig>true</NoConfig>
@@ -60,11 +60,14 @@
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Examples\3. Interaction Callbacks\Scripts\TransformHandle.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\Interface\IInternalInteractionManager.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\InteractionController.cs" />
+    <Compile Include="Assets\Plugins\LeapMotion\Modules\Hands\Examples\Scripts\CycleHandPairs.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\ContactBoneParent.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Plugins\GrabClassifierHeuristics.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\KinematicGraspedMovement.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\UI\Anchors\Anchor.cs" />
+    <Compile Include="Assets\Plugins\LeapMotion\Modules\Hands\Scripts\HandBinder\HandBinderData.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Utility\PhysicsCallbacks.cs" />
+    <Compile Include="Assets\Plugins\LeapMotion\Modules\Hands\Scripts\HandBinder\HandBinderAutoBinder.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Utility\ActivityManager.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Examples\7. Moving Reference Frames\Scripts\Spaceship.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\SlidingWindowThrow.cs" />
@@ -86,9 +89,10 @@
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\InteractionHand.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\Interface\IInteractionBehaviour.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\Interface\IGraspedPoseHandler.cs" />
+    <Compile Include="Assets\Plugins\LeapMotion\Modules\Hands\Scripts\HandBinder\HandBinder.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\DefaultXRNodeTrackingProvider.cs" />
-    <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Utility\KabschSolver.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\HeuristicGrabClassifier.cs" />
+    <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Utility\KabschSolver.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\InteractionXRController.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Examples\Common Example Assets\Scripts\SimpleInteractionGlow.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\IXRControllerTrackingProvider.cs" />
@@ -115,6 +119,7 @@
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Examples\2. Basic UI\MovePoseExample.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Scripts\Internal\Interface\IThrowHandler.cs" />
     <Compile Include="Assets\Plugins\LeapMotion\Modules\InteractionEngine\Plugins\ColliderUtil.cs" />
+    <Compile Include="Assets\Plugins\LeapMotion\Modules\Hands\Scripts\HandBinder\HandBinderBoneDefinitions.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\Plugins\LeapMotion\Core\Version.txt" />
@@ -122,6 +127,7 @@
      <None Include="Assets\Plugins\LeapMotion\Core\Shaders\InteractionVolumeWireframe.shader" />
      <None Include="Assets\Plugins\LeapMotion\Core\readme.txt" />
      <None Include="Assets\Plugins\LeapMotion\Core\README_BEFORE_UPDATING.txt" />
+     <None Include="Assets\Plugins\LeapMotion\Modules\Hands\Models\GenericHand\GenericHandShader.shader" />
      <None Include="Assets\Plugins\LeapMotion\Core\Shaders\VertexOffsetShader.shader" />
      <None Include="Assets\Plugins\LeapMotion\Core\Plugins\x86_64\LeapC.dll" />
      <None Include="Assets\Plugins\LeapMotion\Core\Shaders\PassthroughBackground.shader" />

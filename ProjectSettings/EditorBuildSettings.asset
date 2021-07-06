@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: 23fd077d317c2ec49a97ad44c0473bd6
+  - enabled: 1
+    path: Assets/Scenes/mriModel.unity
+    guid: 91afa37328bfb9646bdf2eac979cf0f0
   m_configObjects: {}
