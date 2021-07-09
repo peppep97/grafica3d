@@ -3,12 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//classe usata per condividere dei parametri tra le scene. Tra questi, nome del paziente, patologia, nome del modello corrispondente, età e sesso del paziente
 public class GameControl : MonoBehaviour
 {
-    //Static reference
+    //Static reference alla classe
     public static GameControl control;
 
-    //Data to persist
+    //dati da memorizzare
     public String patientName;
     public String pathologyName;
     public String modelName;
@@ -16,18 +17,17 @@ public class GameControl : MonoBehaviour
 
     void Awake()
     {
-        //Let the gameobject persist over the scenes
+        //con questo metodo il GameObject a cui è associato lo script GameControl persiste quando la scena cambia
         DontDestroyOnLoad(gameObject);
 
+		//se control è null, impostalo alla classe corrente
         if (control == null)
         {
-            //This instance becomes the single instance available
             control = this;
         }
-        //Otherwise check if the control instance is not this one
+		//se control non si riferisce a questa classe, distruggi il gameObject associato a questa classe
         else if (control != this)
         {
-            //In case there is a different instance destroy this one.
             Destroy(gameObject);
         }
     }

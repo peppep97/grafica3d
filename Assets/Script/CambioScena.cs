@@ -3,6 +3,8 @@ using UnityEngine.SceneManagement;
 
 public class CambioScena : MonoBehaviour
 {
+	//ogni metodo imposta i parametri riferiti al modello selezionato nell'oggetto GameControl (singleton class)
+	//usato per passare i parametri alla scena successiva
     public void Modello_Polmone_Pressed()
     {
         GameControl.control.patientName = "Paziente 1";
@@ -48,8 +50,7 @@ public class CambioScena : MonoBehaviour
     public void ExitPressed()
     {
 #if UNITY_EDITOR
-        // Application.Quit() does not work in the editor so
-        // UnityEditor.EditorApplication.isPlaying need to be set to false to end the game
+        //application.Quit() non funziona nell'editor. In tal caso imposta isPlaying a false per chiudere l'applicazione
         UnityEditor.EditorApplication.isPlaying = false;
 #else
          Application.Quit();

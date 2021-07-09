@@ -1,25 +1,29 @@
 using System.Security.Cryptography;
 using UnityEngine;
 
+//viene aggiunto come componente ad ogni modello 3d
 public class AnimationController : MonoBehaviour
 {
+	//velocità di spostamento
     public float speed;
 
+	//posizione finale
     public Vector3 destination;
+	//quando start vale true, l'oggetto viene spostato verso destination
     private bool start = false;
 
     void Start()
     {
-        // Set the destination to be the object's position so it will not start off moving
+		//imposta come destinazione quella corrente, perché l'oggetto non deve spostarsi
         destination = gameObject.transform.position;    
     }
 
     void Update()
     {
-        // If the object is not at the target destination
+		//se la destinazione impostata è diversa da quella corrente e start vale true, l'oggetto viene spostato verso la destinazione
+		//con la funzione MoveTowards, che sposta l'oggetto di una quantità pari a Time.deltaTime * speed ad ogni update, verso la destinazione finale
         if (destination != gameObject.transform.position)
         {
-            // Move towards the destination each frame until the object reaches it
             if (start)
             {
                 transform.position = Vector3.MoveTowards(transform.position, destination, Time.deltaTime * speed);
@@ -27,11 +31,12 @@ public class AnimationController : MonoBehaviour
         }
         else
         {
+			//appena arriva a destinazione, imposta start a false
             start = false;
         }
     }
-
-    // Set the destination to cause the object to smoothly glide to the specified location
+	
+	//viene chiamata dall'esterno (sul componente AnimationController dell'oggetto corrente) e serve ad impostare la destinazione dell'oggetto
     public void SetDestination(Vector3 value)
     {
         start = true;

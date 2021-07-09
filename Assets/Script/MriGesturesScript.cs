@@ -14,6 +14,7 @@ using Rect = UnityEngine.Rect;
 
 public class MriGesturesScript : MonoBehaviour
 {
+	//dimensione del video frame
     public static int VIDEO_SIZE = 512;
     public RawImage outputImage;
     public VideoPlayer videoPlayer;
@@ -25,12 +26,19 @@ public class MriGesturesScript : MonoBehaviour
     public Text detailText;
     public Text label;
 
+	//vettori contenti le clip (mri) di ogni modello
     public List<VideoClip> cervelloClips;
     public List<VideoClip> polmoniClips;
     public List<VideoClip> gastroClips;
 
+	//per impostare le clip del modello selezioanto
     List<VideoClip> clips;
 
+
+	//per impostare i fattori di proporzionalità dei 3 modelli (per effettuare la misurazione)
+	//18cm / 344px (larghezza cranio medio in cm / larghezza cranio in px nella rawimage)
+    //15cm / 260px
+    //15cm / 133px
     public float cervelloFactor;
     public float polmoniFactor;
     public float gastroFactor;
@@ -40,15 +48,16 @@ public class MriGesturesScript : MonoBehaviour
     public GameObject lateralView;
     public GameObject frontalView;
 
+	//valore di contrasto da aggiungere
     double contrast = 0;
+	//per la gesture di pinch
     float lastDistanceBetweenHands = -1;
 
-    //18cm / 344px (larghezza cranio medio in cm / larghezza cranio in px nella rawimage)
-    //15cm / 260px
-    //15cm / 133px
-
+	//flag per effettuare la misurazione/screenshot
     bool measure = false;
     bool screenshot = false;
+	
+	//per memorizzare i punti selezionati dalle due dita (per effettuare la misurazione)
     Vector2 point1 = new Vector2(-1, -1);
     Vector2 point2 = new Vector2(-1, -1);
 
@@ -64,12 +73,13 @@ public class MriGesturesScript : MonoBehaviour
         String patientName = GameControl.control.patientName;
         String pathologyName = GameControl.control.pathologyName;
         String modelName = GameControl.control.modelName;
-        String details = GameControl.control.modelName;
+        String details = GameControl.control.details;
 
         patientText.text = patientName;
         pathologyText.text = pathologyName;
         detailText.text = details;
 
+		//carica le clip e il fattore di proporzionalità del modello selezionato
         if (modelName.Equals("Polmoni"))
         {
             clips = polmoniClips;
@@ -101,71 +111,64 @@ public class MriGesturesScript : MonoBehaviour
 
         videoPlayer.clip = clips[0];
 
-
-        videoPlayer.sendFrameReadyEvents = true; //quando è pronto a visualizzare un fotogramma che ha letto    
-        videoPlayer.frameReady += OnNewFrame; //quando il fotogramma è pronto esegue la funzione
+		//quando è pronto a visualizzare un fotogramma che ha letto    
+        videoPlayer.sendFrameReadyEvents = true; 
+		//quando il fotogramma è pronto esegue la funzione
+        videoPlayer.frameReady += OnNewFrame; 
 
         videoPlayer.Pause();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-
-            // prepare texture with Screen and save it
-            Texture2D texture = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, true);
-            texture.ReadPixels(new Rect(0f, 0f, Screen.width, Screen.height), 0, 0);
-            texture.Apply();
-
-            // save to persistentDataPath File
-            byte[] data = texture.EncodeToPNG();
-            string destination = Path.Combine(Application.persistentDataPath,
-                    System.DateTime.Now.ToString("yyyy-MM-dd-HHmmss") + ".png");
-            File.WriteAllBytes(destination, data);
-
-            Debug.Log(string.Format("Took screenshot to: {0}", destination));
-
-        }
         DateTime dt = DateTime.Now;
         dateText.text = dt.ToString("dd/MM/yyyy - HH:mm");
 
         controller = new Controller();
         Frame frame = controller.Frame();
 
+		//se c'è una sola mano nel frame
         if (frame.Hands.Count == 1)
         {
             Hand hand = frame.Hands[0];
 
+			//se la mano è aperta, metti il video in play
             if (hand.GrabStrength == 0)
             {
                 videoPlayer.Play();
             }
+			
+			//se la mano è chiusa, metti il video in pausa
             else if (hand.GrabStrength >= 0.8)
             {
                 videoPlayer.Pause();
             }
 
         }
+		//se ci sono due mani nel frame
         else if (frame.Hands.Count == 2)
         {
             Hand firstHand = frame.Hands[0];
             Hand secondHand = frame.Hands[1];
 
+			//se entrambi gli indici sono estesi e la funzionalità di misura è abilitata -> gesture per calcolare la distanza
             if (firstHand.Fingers[1].IsExtended && secondHand.Fingers[1].IsExtended && measure)
             {
                 videoPlayer.Pause();
 
+				//calcola il punto selezionato dalla mano sinistra nella raw image
                 Vector3 pos1 = firstHand.Fingers[1].TipPosition.ToVector3();
                 pos1.x += Screen.width / 2;
                 pos1.y += 20;
+				//converti le coordinate del punto del dito indice in coordinate nella raw image del video
                 RectTransformUtility.ScreenPointToLocalPointInRectangle(outputImage.rectTransform, pos1.ToVector2(), Camera.main, out point1);
 
+				//per spostare l'origine nel vertice in alto a destra della raw image
                 point1.x += VIDEO_SIZE / 2;
                 point1.y -= VIDEO_SIZE / 2;
                 point1.y = -point1.y;
 
+				//calcola il punto selezionato dalla mano destra nella raw image
                 Vector3 pos2 = secondHand.Fingers[1].TipPosition.ToVector3();
                 pos2.x += Screen.width / 2;
                 pos2.y += 20;
@@ -185,44 +188,44 @@ public class MriGesturesScript : MonoBehaviour
                     lastPalmPositionRight = secondHand.PalmPosition.ToVector3();
                 }
 
-                //check if palm position variation
+                //calcola la variazione di spostamento di entrambe le mani
                 Vector3 differenceLeft = firstHand.PalmPosition.ToVector3() - lastPalmPositionLeft;
                 Vector3 differenceRight = secondHand.PalmPosition.ToVector3() - lastPalmPositionRight;
 
-                Debug.Log(differenceLeft + " - " + differenceRight);
-
+				//se entrambe le mani non si sono spostate per 3s, abilita il flag per fare lo screenshot
                 if (differenceLeft.x.Abs() < 1 && differenceLeft.y.Abs() < 1 && differenceLeft.z.Abs() < 1
                 && differenceRight.x.Abs() < 1 && differenceRight.y.Abs() < 1 && differenceRight.z.Abs() < 1)
                 {
-
 
                     time += Time.deltaTime;
 
                     if (time >= 3f)
                     {
-                        Debug.Log("make screenshot");
                         screenshot = true;
                         time = 0f;
                     }
                 }
                 else
                 {
+					//altrimenti resetta il timer se c'è stato spostamento nel mentre
                     time = 0f;
                     lastPalmPositionLeft = new Vector3(-1, -1, -1);
                     lastPalmPositionRight = new Vector3(-1, -1, -1);
                 }
 
+				//aggiorna le posizioni della mano con quelle correnti
                 lastPalmPositionLeft = firstHand.PalmPosition.ToVector3();
                 lastPalmPositionRight = secondHand.PalmPosition.ToVector3();
 
+				//imposta il frame del video
                 SetFrame();
-
             }
+			//se entrambe le mani non hanno il pugno chiuso e hanno il dito indice a contatto con il pollice (pinchStrength > 0.5) -> gesture di pinch 
             else if (firstHand.PinchStrength > 0.5 && firstHand.GrabStrength < 0.7 && secondHand.PinchStrength > 0.5 && secondHand.GrabStrength < 0.7
                  && !firstHand.Fingers[1].IsExtended && !secondHand.Fingers[1].IsExtended && !measure)
             {
 
-                float distanceBetweenHands = firstHand.PalmPosition.DistanceTo(secondHand.PalmPosition); //distance position between hands as float
+                float distanceBetweenHands = firstHand.PalmPosition.DistanceTo(secondHand.PalmPosition);
 
                 if (lastDistanceBetweenHands == -1)
                 {
@@ -232,8 +235,10 @@ public class MriGesturesScript : MonoBehaviour
                 float difference = distanceBetweenHands - lastDistanceBetweenHands;
                 lastDistanceBetweenHands = distanceBetweenHands;
 
+				//la differenza di spostamento si usa come offset da aggiungere al contrasto
                 contrast += difference;
 
+				//per impostare delle soglie massime/minime
                 if (contrast > 70)
                 {
                     contrast = 70;
@@ -243,6 +248,7 @@ public class MriGesturesScript : MonoBehaviour
                     contrast = 0;
                 }
 
+				//se il video è in pausa, aggiorna manualmente il frame
                 if (videoPlayer.isPaused)
                 {
                     SetFrame();
@@ -250,6 +256,7 @@ public class MriGesturesScript : MonoBehaviour
             }
         }
 
+		//scrivi il valore del contrasto nella label (in basso a sinistra)
         if (contrast > 0)
         {
             label.text = "Contrasto: +" + (int)contrast;
@@ -262,8 +269,6 @@ public class MriGesturesScript : MonoBehaviour
 
     private void SetFrame()
     {
-        //outputImage.texture = videoPlayer.texture;
-
         RenderTexture videoFrame = videoPlayer.texture as RenderTexture;
 
         //la texture è un file immagine che utilizziamo per dipingere un oggetto. La renderTexture 
@@ -295,25 +300,29 @@ public class MriGesturesScript : MonoBehaviour
 
         var modifiedSrc = new Mat();
 
-        /* possiamo modificare in OpenCV la nostra MAT*/
+        //aggiorna la MAT cambiando il contrasto
         UpdateBrightnessContrast(img, modifiedSrc, 0, contrast);
 
-        //if (!point1.Equals(new Vector2(-1, -1)) && !point2.Equals(new Vector2(-1, -1)))
-        //{
+		//converti i punti letti in punti di OpenCv
         OpenCvSharp.Point p1 = new OpenCvSharp.Point(point1.x, point1.y);
         OpenCvSharp.Point p2 = new OpenCvSharp.Point(point2.x, point2.y);
 
+		//disegna i punti
         modifiedSrc.Circle(p1, 3, Scalar.DarkRed, 1, LineTypes.AntiAlias);
         modifiedSrc.Circle(p2, 3, Scalar.DarkRed, 1, LineTypes.AntiAlias);
 
+		//disegna la linea tra i due punti
         modifiedSrc.Line(p1, p2, Scalar.Red, 3, LineTypes.AntiAlias);
-
+		
+		//calcola la dimensione in base alla distanza tra i due punti (moltiplicata per il fattore di proporzionalità)
         float distance = Vector2.Distance(point1, point2) * factor;
 
         if (distance > 0)
         {
+			//scrivi la dimensione nell'immagine
             modifiedSrc.PutText("Dimensione: " + Math.Round(distance, 2) + "cm", new OpenCvSharp.Point(5, 15), HersheyFonts.Italic, 0.5, Scalar.Red, 1, LineTypes.AntiAlias);
 
+			//se il flag di screenshot è abilitato, converti la mat in texture, codificala in PNG e salvala nella cartella del progetto
             if (screenshot)
             {
                 byte[] bytes = OpenCvSharp.Unity.MatToTexture(modifiedSrc).EncodeToPNG();
@@ -324,6 +333,7 @@ public class MriGesturesScript : MonoBehaviour
                 }
                 File.WriteAllBytes(dirPath + DateTime.Now.ToString("yyyy-MM-dd-HHmmss") + ".png", bytes);
 
+				//dopo aver fatto lo screenshot, reimposta i flag a false e i punti
                 screenshot = false;
                 measure = false;
 
@@ -331,30 +341,38 @@ public class MriGesturesScript : MonoBehaviour
                 point2 = new Vector2(-1, -1);
             }
         }
-
-
+		
+		//imposta la texture della raw image con quella modificata da OpenCv
         outputImage.texture = OpenCvSharp.Unity.MatToTexture(modifiedSrc);
     }
 
+	//funzione chiamata ogni volta che cambia il frame nel videoplayer 
     private void OnNewFrame(VideoPlayer source, long frameidx)
     {
+		//chiama la set frame per aggiornare il frame nella raw image del video
         SetFrame();
     }
 
+	//funzione per riprodurre la vista frontale
     public void PlayFrontalView()
     {
         viewText.text = "Vista frontale";
         videoPlayer.clip = clips[0];
     }
 
+	//funzione per riprodurre la lista laterale
     public void PlayLateralView()
     {
         viewText.text = "Vista laterale";
         videoPlayer.clip = clips[1];
     }
 
+	//funzione per variare il contrasto della matrice dell'immagine
     private static void UpdateBrightnessContrast(Mat src, Mat modifiedSrc, int brightness, double contrast)
     {
+		//varia i paramentri alpha e beta
+		//alpha influenza il contrasto
+		//beta influenza la luminosità
         double alpha, beta;
         if (contrast > 0)
         {
@@ -368,22 +386,19 @@ public class MriGesturesScript : MonoBehaviour
             alpha = (256f - delta * 2) / 255f;
             beta = alpha * brightness + delta;
         }
+		//memorizza il risultato in modifiedSrc
         src.ConvertTo(modifiedSrc, MatType.CV_8UC3, alpha, beta);
     }
 
+	//funzione per resettare il contrasto quando viene premuto il bottone
     public void OnChangeContrast()
     {
         contrast = 0;
     }
 
+	//funzione per abilitare/disabilitare la funzionalità di misurazione quando viene premuto il bottone
     public void OnMeasure()
     {
         measure = !measure;
-    }
-
-    void OnMouseDown()
-    {
-        ScreenCapture.CaptureScreenshot("capture.png");
-        Debug.Log("capture");
     }
 }
